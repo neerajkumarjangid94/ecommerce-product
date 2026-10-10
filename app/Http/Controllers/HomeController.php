@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-
 use App\Models\Product;
 
 class HomeController extends Controller
 {
+    //product list for user.
     public function index()
     {
-        $products = Product::with(['images', 'variants.images', 'variants.optionValues.optionValue.option'])
+        $products = Product::with([
+            'images',
+            'variants.images',
+            'variants.optionValues.optionValue.option'
+        ])
             ->active()
             ->latest()
             ->paginate(12);
@@ -18,15 +21,16 @@ class HomeController extends Controller
         return view('welcome', compact('products'));
     }
 
-    public function show($id)
+    //product details by id.
+    public function show($id = null)
     {
         $product = Product::with([
-            'images', 
-            'variants.images', 
+            'images',
+            'variants.images',
             'variants.optionValues.optionValue.option'
         ])
-        ->active()
-        ->findOrFail($id);
+            ->active()
+            ->findOrFail($id);
 
         return view('product_detail', compact('product'));
     }

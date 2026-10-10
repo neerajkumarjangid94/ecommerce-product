@@ -12,9 +12,7 @@ use Illuminate\Http\RedirectResponse;
 
 class ProductController extends Controller
 {
-    public function __construct(protected ProductService $productService)
-    {
-    }
+    public function __construct(protected ProductService $productService) {}
 
     /**
      * Store a newly created product in the database.
@@ -34,7 +32,7 @@ class ProductController extends Controller
     public function edit($id)
     {
         $product = Product::with(['images', 'variants.images', 'variants.optionValues.optionValue.option'])->findOrFail($id);
-        
+
         $colors = Color::orderBy('name')->get();
         $sizes = Size::orderBy('name')->get();
 
@@ -50,14 +48,20 @@ class ProductController extends Controller
                 $val = $ov->optionValue->value ?? '';
                 if ($optionName == 'Color') {
                     $color = $colors->firstWhere('name', $val);
-                    if($color) { $matchedColorId = $color->id; $selectedColors[] = $color->id; }
+                    if ($color) {
+                        $matchedColorId = $color->id;
+                        $selectedColors[] = $color->id;
+                    }
                 }
                 if ($optionName == 'Size') {
                     $size = $sizes->firstWhere('name', $val);
-                    if($size) { $matchedSizeId = $size->id; $selectedSizes[] = $size->id; }
+                    if ($size) {
+                        $matchedSizeId = $size->id;
+                        $selectedSizes[] = $size->id;
+                    }
                 }
             }
-            $hash = 'color_'.$matchedColorId.'_size_'.$matchedSizeId;
+            $hash = 'color_' . $matchedColorId . '_size_' . $matchedSizeId;
             $vImage = $variant->images->first();
             $existingVariantsMap[$hash] = [
                 'sku' => $variant->sku,

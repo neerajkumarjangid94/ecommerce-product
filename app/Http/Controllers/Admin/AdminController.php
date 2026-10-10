@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Color;
 use App\Models\Size;
 use App\Models\Product;
-use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
