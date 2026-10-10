@@ -55,10 +55,13 @@
 
                 {{-- PRODUCT OPTIONS --}}
                 <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
-                    <div class="mb-5">
+                    <div class="flex items-center justify-between mb-5 border-b border-gray-100 pb-3">
                         <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
                             2. Product Options
                         </h3>
+                        <a href="{{ route('admin.settings') }}" class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">
+                            Manage Colors & Sizes
+                        </a>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

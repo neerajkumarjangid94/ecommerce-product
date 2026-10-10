@@ -38,4 +38,12 @@ class Product extends Model
     {
         return $query->where('is_active', true);
     }
+
+    protected static function booted()
+    {
+        static::deleting(function ($product) {
+            // Soft delete all related variants
+            $product->variants()->delete();
+        });
+    }
 }

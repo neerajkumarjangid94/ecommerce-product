@@ -24,7 +24,7 @@ class StoreProductRequest extends FormRequest
             'name'        => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:5000'],
             'is_active'   => ['nullable', 'boolean'],
-            'images'      => ['required', 'array', 'max:10'],
+            'images'      => [$this->isMethod('post') ? 'required' : 'nullable', 'array', 'max:10'],
             'images.*'    => ['image', 'mimes:jpg,jpeg,png,webp', 'max:2048'], // 2MB each
             'color_ids'   => ['nullable', 'array'],
             'color_ids.*' => ['exists:colors,id'],
@@ -34,6 +34,7 @@ class StoreProductRequest extends FormRequest
             'variants'             => ['nullable', 'array'],
             'variants.*.color_id'  => ['nullable', 'exists:colors,id'],
             'variants.*.size_id'   => ['nullable', 'exists:sizes,id'],
+            'variants.*.sku'       => ['nullable', 'string', 'max:255'],
             'variants.*.price'     => ['required', 'numeric', 'min:0'],
             'variants.*.stock'     => ['required', 'integer', 'min:0'],
             'variants.*.image'     => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],

@@ -48,6 +48,46 @@ class ProductService
     }
 
     /**
+     * Update an existing product and its variants/options.
+     *
+     * @param  Product $product
+     * @param  array   $data   Validated data from StoreProductRequest
+     * @return Product
+     */
+    public function update(Product $product, array $data): Product
+    {
+        return DB::transaction(function () use ($product, $data) {
+
+            // 1. Update basic product details
+            $product->update([
+                'name'        => $data['name'],
+                'description' => $data['description'] ?? null,
+                'is_active'   => $data['is_active'] ?? true,
+            ]);
+
+            // 2. Handle image uploads (Replace existing if present)
+            if (!empty($data['images'])) {
+                $product->images()->delete(); // Remove old images
+                $this->storeImages($product, $data['images']);
+            }
+
+            // 3. To handle complex variant changes, we soft-delete old variants
+            //    We do NOT delete options anymore to avoid unique constraint violations on Color/Size names.
+            $product->variants()->delete();
+
+            // 4. Handle Colors & Sizes Options
+            $maps = $this->storeOptions($product, $data['color_ids'] ?? [], $data['size_ids'] ?? []);
+
+            // 5. Handle Variants
+            if (!empty($data['variants'])) {
+                $this->storeVariants($product, $data['variants'], $maps);
+            }
+
+            return $product;
+        });
+    }
+
+    /**
      * Store product images and mark the first one as primary.
      *
      * @param  Product            $product
@@ -81,10 +121,14 @@ class ProductService
         $sizeMap = [];
 
         if (!empty($colorIds)) {
-            $colorOption = $product->options()->create(['name' => 'Color']);
+            $colorOption = $product->options()->withTrashed()->firstOrCreate(['name' => 'Color']);
+            if ($colorOption->trashed()) { $colorOption->restore(); }
+
             $colors = Color::whereIn('id', $colorIds)->get();
             foreach ($colors as $color) {
-                $val = $colorOption->values()->create(['value' => $color->name]);
+                $val = $colorOption->values()->withTrashed()->firstOrCreate(['value' => $color->name]);
+                if ($val->trashed()) { $val->restore(); }
+
                 $colorMap[$color->id] = [
                     'option_id' => $colorOption->id,
                     'option_value_id' => $val->id
@@ -93,10 +137,14 @@ class ProductService
         }
 
         if (!empty($sizeIds)) {
-            $sizeOption = $product->options()->create(['name' => 'Size']);
+            $sizeOption = $product->options()->withTrashed()->firstOrCreate(['name' => 'Size']);
+            if ($sizeOption->trashed()) { $sizeOption->restore(); }
+
             $sizes = Size::whereIn('id', $sizeIds)->get();
             foreach ($sizes as $size) {
-                $val = $sizeOption->values()->create(['value' => $size->name]);
+                $val = $sizeOption->values()->withTrashed()->firstOrCreate(['value' => $size->name]);
+                if ($val->trashed()) { $val->restore(); }
+
                 $sizeMap[$size->id] = [
                     'option_id' => $sizeOption->id,
                     'option_value_id' => $val->id
@@ -119,22 +167,41 @@ class ProductService
     {
         foreach ($variants as $v) {
             
-            // Prefer the frontend generated SKU if it exists and is unique
+            // Prefer the frontend generated SKU if it exists
             $sku = $v['sku'] ?? '';
-            
-            if (empty($sku) || ProductVariant::where('sku', $sku)->exists()) {
-                // Generate a robust unique SKU for the variant as a fallback
-                $prefix = strtoupper(Str::slug(substr($product->name, 0, 5))) ?: 'VAR';
-                do {
-                    $sku = $prefix . '-' . strtoupper(Str::random(6));
-                } while (ProductVariant::where('sku', $sku)->exists());
+            $existingVariant = null;
+
+            if (!empty($sku)) {
+                $existingVariant = ProductVariant::withTrashed()->where('sku', $sku)->where('product_id', $product->id)->first();
             }
 
-            $variant = $product->variants()->create([
-                'sku' => $sku,
-                'price' => $v['price'],
-                'stock_quantity' => $v['stock'],
-            ]);
+            if ($existingVariant) {
+                if ($existingVariant->trashed()) {
+                    $existingVariant->restore();
+                }
+                $existingVariant->update([
+                    'price' => $v['price'],
+                    'stock_quantity' => $v['stock'],
+                ]);
+                $variant = $existingVariant;
+
+                // Clear old options mapping for this variant as we reconstruct it
+                $variant->optionValues()->forceDelete();
+            } else {
+                if (empty($sku) || ProductVariant::withTrashed()->where('sku', $sku)->exists()) {
+                    // Generate a robust unique SKU for the variant as a fallback
+                    $prefix = strtoupper(Str::slug(substr($product->name, 0, 5))) ?: 'VAR';
+                    do {
+                        $sku = $prefix . '-' . strtoupper(Str::random(6));
+                    } while (ProductVariant::withTrashed()->where('sku', $sku)->exists());
+                }
+
+                $variant = $product->variants()->create([
+                    'sku' => $sku,
+                    'price' => $v['price'],
+                    'stock_quantity' => $v['stock'],
+                ]);
+            }
 
             // Link color if present
             if (!empty($v['color_id']) && isset($maps['colorMap'][$v['color_id']])) {
@@ -156,6 +223,7 @@ class ProductService
 
             // Store variant image if present
             if (!empty($v['image'])) {
+                $variant->images()->delete(); // Clear old image logic if a new one is provided
                 $path = $v['image']->store("products/{$product->id}/variants", 'public');
                 $variant->images()->create([
                     'image_path' => $path,
