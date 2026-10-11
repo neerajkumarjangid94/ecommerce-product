@@ -17,9 +17,9 @@ Route::get('/product/{id}', [HomeController::class, 'show'])->name('product.show
 
 Route::middleware('auth')->group(function () {
     //dashboard route.
-    Route::get('/dashboard', function () {
-        return view('admin_product');
-    })->middleware(['auth', 'verified'])->name('dashboard');
+    Route::get('/dashboard', [AdminController::class, 'admin_product'])
+        ->middleware(['auth', 'verified'])
+        ->name('dashboard');
 
     //profile routes for user profile management
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

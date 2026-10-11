@@ -27,7 +27,7 @@
                     @auth
                     <a href="{{ url('/dashboard') }}" class="text-sm font-semibold text-gray-600 hover:text-black transition">Dashboard</a>
                     @else
-                    <a href="{{ route('login') }}" class="text-sm font-semibold text-gray-600 hover:text-black transition">Admin Login</a>
+                    <a href="{{ route('login') }}" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition">Admin Login</a>
                     @endauth
                 </div>
             </div>

@@ -30,7 +30,7 @@ class StoreProductRequest extends FormRequest
             'color_ids.*' => ['exists:colors,id'],
             'size_ids'    => ['nullable', 'array'],
             'size_ids.*'  => ['exists:sizes,id'],
-            
+
             'variants'             => ['nullable', 'array'],
             'variants.*.color_id'  => ['nullable', 'exists:colors,id'],
             'variants.*.size_id'   => ['nullable', 'exists:sizes,id'],
@@ -49,7 +49,7 @@ class StoreProductRequest extends FormRequest
         return [
             'name.required'       => 'Product name is required.',
             'name.max'            => 'Product name may not be greater than 255 characters.',
-            'description.required'=> 'Description is required.',
+            'description.required' => 'Description is required.',
             'description.max'     => 'Description may not be greater than 5000 characters.',
             'images.required'     => 'At least one product image is required.',
             'images.max'          => 'You may not upload more than 10 images.',
@@ -64,5 +64,23 @@ class StoreProductRequest extends FormRequest
             'variants.*.image.mimes'    => 'Variant image must be of type: jpg, jpeg, png, or webp.',
             'variants.*.image.max'      => 'Variant image may not be larger than 2MB.',
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
+    {
+        if ($this->is('api/*') || $this->expectsJson()) {
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                response()->json([
+                    'success' => false,
+                    'message' => 'Validation error',
+                    'errors'  => $validator->errors(),
+                ], 422)
+            );
+        }
+
+        parent::failedValidation($validator);
     }
 }

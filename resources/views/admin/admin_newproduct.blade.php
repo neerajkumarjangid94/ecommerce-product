@@ -58,7 +58,7 @@
                         <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
                             2. Product Options
                         </h3>
-                        <a href="{{ route('admin.settings') }}" class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">
+                        <a href="{{ route('admin.settings', ['return_to' => route('admin.newproduct')]) }}" class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">
                             Manage Colors & Sizes
                         </a>
                     </div>
@@ -73,7 +73,7 @@
                             @if ($colors->isEmpty())
                             <p class="text-sm text-gray-400 border border-dashed border-gray-200 rounded-lg p-3">
                                 No colors found.
-                                <a href="{{ route('admin.settings') }}" class="text-blue-500 hover:underline">Add from Settings →</a>
+                                <a href="{{ route('admin.settings', ['return_to' => route('admin.newproduct')]) }}" class="text-blue-500 hover:underline">Add from Settings →</a>
                             </p>
                             @else
                             <div class="flex flex-wrap gap-3">

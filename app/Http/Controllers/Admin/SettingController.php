@@ -13,19 +13,29 @@ use Illuminate\View\View;
 
 class SettingController extends Controller
 {
-    public function __construct(protected SettingService $settingService)
-    {
-    }
+    public function __construct(protected SettingService $settingService) {}
 
     /**
      * Show settings page with all colors and sizes.
      */
-    public function index(): View
+    public function index(\Illuminate\Http\Request $request): View
     {
+        // If a return_to parameter is provided, save it
+        if ($request->filled('return_to')) {
+            session(['settings_return_to' => $request->query('return_to')]);
+        } else {
+            // Otherwise check previous URL if it came from outside settings
+            $previous = url()->previous();
+            if ($previous && !str_contains($previous, '/admin/settings')) {
+                session(['settings_return_to' => $previous]);
+            }
+        }
+
         $colors = Color::latest()->get();
         $sizes  = Size::latest()->get();
+        $returnUrl = session('settings_return_to', route('admin.product'));
 
-        return view('admin.settings', compact('colors', 'sizes'));
+        return view('admin.settings', compact('colors', 'sizes', 'returnUrl'));
     }
 
     /**
