@@ -18,9 +18,9 @@ Route::prefix('v1')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 
     // user's products apis (Public without auth.)
-    Route::prefix('products')->controller(ProductController::class)->group(function () {
-        Route::get('/', 'productListing');       // Listing of products
-        Route::get('/{id}', 'productDetails');     // Product details by ID
+    Route::prefix('user/products')->controller(ProductController::class)->group(function () {
+        Route::get('/', 'productListing');                          // Listing of products
+        Route::get('/{id}', 'productDetails')->whereNumber('id');    // Product details by ID
     });
 
     // All Colors & Sizes Listings of products they added by admin. (Public)
@@ -40,7 +40,7 @@ Route::prefix('v1')->group(function () {
 
         // Product Management CRUD
         Route::prefix('products')->controller(ProductController::class)->group(function () {
-            Route::get('/', 'adminProductListing');
+            Route::get('/all', 'adminProductListing'); // Admin listing with all products
             Route::post('/', 'ProductCreate');
             Route::match(['put', 'post'], '/{id}', 'update');
             Route::delete('/{id}', 'destroy');
