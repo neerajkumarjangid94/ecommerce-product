@@ -122,12 +122,16 @@ class ProductService
 
         if (!empty($colorIds)) {
             $colorOption = $product->options()->withTrashed()->firstOrCreate(['name' => 'Color']);
-            if ($colorOption->trashed()) { $colorOption->restore(); }
+            if ($colorOption->trashed()) {
+                $colorOption->restore();
+            }
 
             $colors = Color::whereIn('id', $colorIds)->get();
             foreach ($colors as $color) {
                 $val = $colorOption->values()->withTrashed()->firstOrCreate(['value' => $color->name]);
-                if ($val->trashed()) { $val->restore(); }
+                if ($val->trashed()) {
+                    $val->restore();
+                }
 
                 $colorMap[$color->id] = [
                     'option_id' => $colorOption->id,
@@ -138,12 +142,16 @@ class ProductService
 
         if (!empty($sizeIds)) {
             $sizeOption = $product->options()->withTrashed()->firstOrCreate(['name' => 'Size']);
-            if ($sizeOption->trashed()) { $sizeOption->restore(); }
+            if ($sizeOption->trashed()) {
+                $sizeOption->restore();
+            }
 
             $sizes = Size::whereIn('id', $sizeIds)->get();
             foreach ($sizes as $size) {
                 $val = $sizeOption->values()->withTrashed()->firstOrCreate(['value' => $size->name]);
-                if ($val->trashed()) { $val->restore(); }
+                if ($val->trashed()) {
+                    $val->restore();
+                }
 
                 $sizeMap[$size->id] = [
                     'option_id' => $sizeOption->id,
@@ -166,7 +174,7 @@ class ProductService
     private function storeVariants(Product $product, array $variants, array $maps): void
     {
         foreach ($variants as $v) {
-            
+
             // Prefer the frontend generated SKU if it exists
             $sku = $v['sku'] ?? '';
             $existingVariant = null;
